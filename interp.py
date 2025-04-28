@@ -16,7 +16,8 @@ def interpolate_one_star(i, param, ID, true_spectra, good_params_scaled, good_ID
         target_param_scaled = scaler.transform([param])
 
         # Precompute all neighbours up to max_neigh
-        nbrs = NearestNeighbors(n_neighbors=max_neigh, algorithm='auto').fit(good_params_scaled)
+        nbrs = NearestNeighbors(n_neighbors=max_neigh, 
+                                algorithm='auto').fit(good_params_scaled)
         distances, indices = nbrs.kneighbors(target_param_scaled)
         
         distances = distances.flatten()
@@ -31,7 +32,7 @@ def interpolate_one_star(i, param, ID, true_spectra, good_params_scaled, good_ID
             print(f"Skipping {ID}: not enough neighbours")
             return None
 
-        best_mse = float('inf')
+        best_mse      = float('inf')
         best_settings = {}
 
         for n_neigh in range(min_neigh, min(max_neigh + 1, len(indices))):
@@ -42,8 +43,10 @@ def interpolate_one_star(i, param, ID, true_spectra, good_params_scaled, good_ID
                 for smoothing in smoothings:
                     for kernel in kernels:
                         try:
-                            model = RBFInterpolator(train_params, train_spectra, kernel=kernel,
-                                                    epsilon=epsilon, smoothing=smoothing)
+                            model = RBFInterpolator(train_params, train_spectra, 
+                                                    kernel=kernel,
+                                                    epsilon=epsilon, 
+                                                    smoothing=smoothing)
                             int_spectra = model(target_param_scaled)[0]
                             mse         = evaluate_error(true_spectra, int_spectra)
 
@@ -66,10 +69,12 @@ def interpolate_one_star(i, param, ID, true_spectra, good_params_scaled, good_ID
             return None
 
         # Now refit with the best setup
-        train_params = good_params_scaled[indices[:best_settings['n_neighbours']]]
+        train_params  = good_params_scaled[indices[:best_settings['n_neighbours']]]
         train_spectra = spectra[indices[:best_settings['n_neighbours']]]
-        model = RBFInterpolator(train_params, train_spectra, kernel=best_settings['kernel'],
-                                epsilon=best_settings['epsilon'], smoothing=best_settings['smoothing'])
+        model         = RBFInterpolator(train_params, train_spectra, 
+                                        kernel    = best_settings['kernel'],
+                                        epsilon   = best_settings['epsilon'],
+                                        smoothing = best_settings['smoothing'])
         int_spectra = model(target_param_scaled)[0]
 
         output   = np.column_stack((wavelength, int_spectra))
@@ -139,26 +144,23 @@ def interpall(max_passes=100):
     if len(spectra) == 0:
         raise ValueError("No suitable data found for interpolation.")
 
-    good_params = np.array(good_params)
-    spectra     = np.array(spectra)
-    wavelength  = get_spectra(good_IDs[0])[:, 0]
+    os.makedirs('./Stellar_Spectra', exist_ok=True)
 
+
+    good_params        = np.array(good_params)
+    spectra            = np.array(spectra)
+    wavelength         = get_spectra(good_IDs[0])[:, 0]
     scaler             = StandardScaler()
     good_params_scaled = scaler.fit_transform(good_params)
 
-    os.makedirs('./Stellar_Spectra', exist_ok=True)
-
-    base_n_neigh = 11
     epsilons     = np.logspace(-1, 1, 5)
     smoothings   = np.logspace(-3, -1, 5)
     kernels      = ['gaussian', 'linear', 'cubic', 'thin_plate_spline', 'multiquadric', 'inverse_multiquadric']
-
+    min_neigh    = 4
+    max_neigh    = 10
     results_dict = {}
     all_errors   = []
-
-    futures   = []
-    min_neigh = 4
-    max_neigh = 10
+    futures      = []
 
     with ProcessPoolExecutor() as executor:
         for i, (param, ID, true_spectra) in enumerate(zip(good_params, good_IDs, spectra)):
@@ -170,7 +172,7 @@ def interpall(max_passes=100):
         for future in as_completed(futures):
             result = future.result()
             if result:
-                ID = result['ID']
+                ID               = result['ID']
                 results_dict[ID] = result['result']
                 all_errors.append(result['result']['mse'])
 
