@@ -1,20 +1,132 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import RBFInterpolator
-from retrieve_irtf import param_retrieve, get_spectra, set_spectra_name
 import os
+import json
+from scipy.interpolate     import RBFInterpolator
+from retrieve_irtf         import param_retrieve, get_spectra, set_spectra_name
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors     import NearestNeighbors
+from concurrent.futures    import ProcessPoolExecutor, as_completed
 
 def evaluate_error(y_true, y_pred):
-    return np.mean((y_true - y_pred)**2)
+    return np.mean((y_true - y_pred) ** 2)
 
-def interpall(max_passes=10):
-    # Retrieve parameters and spectra
+def interpolate_one_star(i, param, ID, true_spectra, good_params_scaled, good_IDs, spectra, scaler, wavelength, epsilons, smoothings, kernels, min_neigh, max_neigh):
+    try:
+        target_param_scaled = scaler.transform([param])
+
+        # Precompute all neighbours up to max_neigh
+        nbrs = NearestNeighbors(n_neighbors=max_neigh, algorithm='auto').fit(good_params_scaled)
+        distances, indices = nbrs.kneighbors(target_param_scaled)
+        
+        distances = distances.flatten()
+        indices   = indices.flatten()
+
+        # Remove self-match if it exists
+        mask      = indices != i
+        indices   = indices[mask]
+        distances = distances[mask]
+
+        if len(indices) < min_neigh:
+            print(f"Skipping {ID}: not enough neighbours")
+            return None
+
+        best_mse = float('inf')
+        best_settings = {}
+
+        for n_neigh in range(min_neigh, min(max_neigh + 1, len(indices))):
+            train_params  = good_params_scaled[indices[:n_neigh]]
+            train_spectra = spectra[indices[:n_neigh]]
+
+            for epsilon in epsilons:
+                for smoothing in smoothings:
+                    for kernel in kernels:
+                        try:
+                            model = RBFInterpolator(train_params, train_spectra, kernel=kernel,
+                                                    epsilon=epsilon, smoothing=smoothing)
+                            int_spectra = model(target_param_scaled)[0]
+                            mse         = evaluate_error(true_spectra, int_spectra)
+
+                            if mse < best_mse: 
+                                best_mse = mse
+                                best_settings = {
+                                    'epsilon'       : epsilon,
+                                    'smoothing'     : smoothing,
+                                    'kernel'        : kernel,
+                                    'mse'           : mse,
+                                    'n_neighbours'  : n_neigh,
+                                    'used_distances': distances[:n_neigh].tolist(),
+                                    'used_IDs'      : [good_IDs[j] for j in indices[:n_neigh].tolist()]
+                                }
+                        except Exception:
+                            continue
+
+        if not best_settings:
+            print(f"Skipping star {ID} due to interpolation failure")
+            return None
+
+        # Now refit with the best setup
+        train_params = good_params_scaled[indices[:best_settings['n_neighbours']]]
+        train_spectra = spectra[indices[:best_settings['n_neighbours']]]
+        model = RBFInterpolator(train_params, train_spectra, kernel=best_settings['kernel'],
+                                epsilon=best_settings['epsilon'], smoothing=best_settings['smoothing'])
+        int_spectra = model(target_param_scaled)[0]
+
+        output   = np.column_stack((wavelength, int_spectra))
+        filename = set_spectra_name(param[0], param[1], param[2])
+        txt_path = './Stellar_Spectra/' + filename
+        png_path = txt_path + '.png'
+
+        np.savetxt(txt_path, output)
+
+        plt.figure()
+        ax = plt.subplot(111)
+        ax.plot(wavelength, int_spectra, 'b', label='Interpolated Spectrum', linewidth=0.5)
+        ax.plot(wavelength, true_spectra, 'r--', label='True Spectrum', linewidth=0.5)
+        ax.legend(
+            title=(
+                f"Star ID: {ID}\n"
+                f"Teff={param[0]:.0f}K  logg={param[1]:.2f}  Z={param[2]:.2f}\n"
+                f"kernel={best_settings['kernel']}\n"
+                f"epsilon={best_settings['epsilon']:.2f}  smoothing={best_settings['smoothing']:.1e}\n"
+                f"MSE={best_settings['mse']:.2e}\n"
+                f"n_neigh={best_settings['n_neighbours']}"
+            ),
+            fontsize       = 6,
+            title_fontsize = 8
+        )
+        plt.xlabel(r'Wavelength ($\AA$)')
+        plt.ylabel('Flux')
+        plt.tight_layout()
+        plt.savefig(png_path)
+        plt.close()
+
+        print(f"Saved: {txt_path}, {png_path}")
+
+        return {
+            'ID': ID,
+            'result': {
+                'epsilon'            : best_settings['epsilon'],
+                'smoothing'          : best_settings['smoothing'],
+                'kernel'             : best_settings['kernel'],
+                'n_neighbours'       : best_settings['n_neighbours'],
+                'mse'                : best_settings['mse'],
+                'neighbour_distances': best_settings['used_distances'],
+                'neighbour_IDs'      : best_settings['used_IDs']
+            }
+        }
+    except Exception as e:
+        print(f"Failed for star {ID}: {e}")
+        return None
+
+
+def interpall(max_passes=100):
     IDs, Teffs, loggs, Zs = param_retrieve()
     param_vectors = np.vstack((Teffs, loggs, Zs)).T
 
-    spectra = []
+    spectra     = []
     good_params = []
-    good_IDs = []
+    good_IDs    = []
     for ID, p in zip(IDs, param_vectors):
         try:
             spec = get_spectra(ID)
@@ -28,70 +140,50 @@ def interpall(max_passes=10):
         raise ValueError("No suitable data found for interpolation.")
 
     good_params = np.array(good_params)
-    spectra = np.array(spectra)
-    wavelength = get_spectra(good_IDs[0])[:, 0]  # Assuming consistent wavelength
+    spectra     = np.array(spectra)
+    wavelength  = get_spectra(good_IDs[0])[:, 0]
 
-    # Grid search for best interpolation model
-    best_error = float('inf')
-    best_model = None
-    best_params = {}
-    epsilons = np.logspace(-1, 1, 5)
-    smoothings = np.logspace(-3, -1, 5)
+    scaler             = StandardScaler()
+    good_params_scaled = scaler.fit_transform(good_params)
 
-    passes = 0
-    for epsilon in epsilons:
-        for smoothing in smoothings:
-            try:
-                model = RBFInterpolator(good_params, spectra, kernel='gaussian',
-                                        epsilon=epsilon, smoothing=smoothing)
-                pred = model(good_params)
-                error = evaluate_error(spectra, pred)
-                if error < best_error:
-                    best_error = error
-                    best_model = model
-                    best_params = {'epsilon': epsilon, 'smoothing': smoothing}
-            except Exception as e:
-                print(f"Interpolation failed for epsilon={epsilon}, smoothing={smoothing}: {e}")
-            passes += 1
-            if passes >= max_passes:
-                break
-        if passes >= max_passes:
-            break
+    os.makedirs('./Stellar_Spectra', exist_ok=True)
 
-    if best_model is None:
-        raise RuntimeError("No successful interpolation model could be built.")
+    base_n_neigh = 11
+    epsilons     = np.logspace(-1, 1, 5)
+    smoothings   = np.logspace(-3, -1, 5)
+    kernels      = ['gaussian', 'linear', 'cubic', 'thin_plate_spline', 'multiquadric', 'inverse_multiquadric']
 
-    print(f"Best interpolation: epsilon={best_params['epsilon']}, smoothing={best_params['smoothing']}")
+    results_dict = {}
+    all_errors   = []
 
-    # Interpolate and save results
-    for p in good_params:
-        int_spectra = best_model(np.array([p]))[0]
-        output = np.column_stack((wavelength, int_spectra))
-        filename = set_spectra_name(p[0], p[1], p[2])
-        txt_path = './Stellar_Spectra/' + filename
-        png_path = txt_path + '.png'
+    futures   = []
+    min_neigh = 4
+    max_neigh = 10
 
-        # Save spectrum
-        np.savetxt(txt_path, output)
+    with ProcessPoolExecutor() as executor:
+        for i, (param, ID, true_spectra) in enumerate(zip(good_params, good_IDs, spectra)):
+            futures.append(
+                executor.submit(interpolate_one_star, i, param, ID, true_spectra, good_params_scaled,
+                                good_IDs, spectra, scaler, wavelength, epsilons, smoothings, kernels, min_neigh, max_neigh)
+            )
 
-        # Save plot
-        plt.figure()
-        ax = plt.subplot(111)
-        ax.plot(wavelength, int_spectra, 'b', label='Interpolated Spectra', linewidth=0.5)
-        plt.xlabel('Wavelength ($\AA$)')
-        plt.ylabel('Flux')
-        plt.savefig(png_path)
-        plt.close()
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                ID = result['ID']
+                results_dict[ID] = result['result']
+                all_errors.append(result['result']['mse'])
 
-        print(f"Saved: {txt_path}, {png_path}")
+    with open('./Stellar_Spectra/interpolation_results.json', 'w') as f:
+        json.dump(results_dict, f, indent=4)
 
-    # --- Convergence summary plot ---
-    predicted_all = best_model(good_params)
-    errors = np.mean((spectra - predicted_all)**2, axis=1)
+    print("Saved interpolation results: ./Stellar_Spectra/interpolation_results.json")
 
+    # --- Convergence plot ---
+    all_errors = np.array(all_errors)
     plt.figure(figsize=(10, 5))
-    plt.plot(errors, 'o-', markersize=3, linewidth=0.8, label='MSE per spectrum')
-    plt.axhline(np.mean(errors), color='r', linestyle='--', label='Mean MSE')
+    plt.plot(all_errors, 'o-', markersize=3, linewidth=0.8, label='MSE per spectrum')
+    plt.axhline(np.mean(all_errors), color='r', linestyle='--', label='Mean MSE')
     plt.xlabel('Star Index')
     plt.ylabel('Mean Squared Error')
     plt.title('Convergence Summary: Interpolated vs Original Spectra')

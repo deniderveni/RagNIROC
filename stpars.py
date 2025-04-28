@@ -168,10 +168,7 @@ def stpars(n_ms, n_rg, feh, afe, age, logg_cn = 3, fig = False, iso = 'DARTMOUTH
     #---------------------------------
     # WRITE OUTPUT FILE
     #---------------------------------
-    exists = os.path.isfile('./Stellar_pars')
-
-    if exists is False:
-        os.system("mkdir Stellar_pars")
+    os.system("mkdir -p Stellar_pars")
     
     ascii.write([isoteffgrid,isologggrid,isomassgrid,isologLgrid,phase],
                 fileout, names = ['#Teff/k','logg',

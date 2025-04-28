@@ -79,8 +79,3 @@ def set_spectra_name(Teff, logg, Z):
 		+ '_Z' +temp_s[2]
 
 	return sp_file
-
-
-
-	
-    

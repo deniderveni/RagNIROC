@@ -23,7 +23,7 @@ from scipy.interpolate import interp1d
 from pyphot.phot import Filter
 import pyphot
 from scipy import ndimage
-from scipy.interpolate import spline
+# from scipy.interpolate import spline
 
 print('------ FUNCTION SSP.MODEL ------')
 print('--------------------------------')
@@ -263,7 +263,6 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
     fraction_L = np.zeros(len(masses))
     sum_flux = np.zeros(len(masses))
     L_corr = np.zeros(len(masses))
-    #inter = interp1d(isomass, isoHmag, fill_value = "extrapolate")
     
     log.write('SSP divided in:  ' + str(nstars) + ' mass bins\n')
     log.write('Information about each bin: \n')
@@ -275,14 +274,6 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
     log.write('    -----------------------------------------------------------------------------------------------------------------------------\n')
     
     for i in range(nstars):
-        #if phase[i] != 'rgb_cn':
-        #    file_flux = pfant12.set_stspec_filename(feh, afe, lmin, lmax, Teffs[i], 
-        #                               loggs[i], CFe, NFe, OFe, MgFe, SiFe, 
-        #                                CaFe, TiFe, NaFe, AlFe, BaFe, EuFe)
-        #else:
-        #    file_flux = pfant12.set_stspec_filename(feh, afe, lmin, lmax, Teffs[i], 
-        #                               loggs[i], CFe, NFe, OFe, MgFe, SiFe,
-        #                                CaFe, TiFe, NaFe, AlFe, BaFe, EuFe)
     
         file_flux = ret.set_spectra_name(Teffs[i], loggs[i], Z)
         print('-------------------------------------------------------------------------------')
@@ -293,15 +284,7 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
         
         os.system('cp ./Stellar_Spectra/' + file_flux + ' ./')
         os.system('mv ./' + file_flux + ' st_spectra')
-	
-        #os.system('rm -f st_spectra')
-        #print(file_flux)
-        #os.system('cp ' + file_flux + ' temp.in')
-        #nulbad_call = "nulbad --fn_flux temp.in --fn_cv st_spectra --flam T" \
-        #    + " --pat %f --fn_progress progress.txt --fwhm %f" % (dl, fwhm)
-        
-        #os.system(nulbad_call)
-        
+	       
         #---------------------------------
         # READ CONVOLVED STELLAR SPECTRA
         #---------------------------------
@@ -460,12 +443,7 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
     
     t = np.loadtxt(file_ssp)
     t[:,1] = t[:,1]/hfilt.get_flux(t[:,0],t[:,1])#Lsun
-    #t[:,1] = 3e-9*t[:,1]/(t[:,0]*10**-4)**2
-#    t1 = np.zeros(len(t))
-#    t2 = np.zeros(len(t))
-#    for i in range(len(t)):
-#        t1[i] = t[i][0]
-#        t2[i] = t[i][1]
+
     plt.figure()
     font = 16
 #    plt.yscale('log')
@@ -505,64 +483,6 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
       # Removal of telluric lines from plots and calculations
     ax.plot(t[:,0],t[:,1]/inter(12230),'b', linewidth = lwid, label = 'Our Model')
   
-
-#####################################
-### Other plots (error analysis) ####
-#####################################
-
-    
-    #avg = (er1 + er2 + er3)/3 
-    #  # Average of all other models 
-    #avg_er = abs(t[:,1]/inter(12230) - avg)
-    #  # Difference between our model and the average
-    #ax.fill_between(t[:,0], t[:,1]/inter(12230) + avg_er, t[:,1]/inter(12230) - avg_er,
-    #               facecolor = 'c', alpha = 0.5, label = 'Average comparative error (BaSS/GirS/MarS)')
-    # # Filled-colour relative errors (assumes the same error in both vertical directions and no error in horizontal directions 
-
-
-    #max_err = np.amax([np.subtract(er1, t[:,1]/inter(12230)), 
-    #                   np.subtract(er2, t[:,1]/inter(12230)), 
-    #                   np.subtract(er3, t[:,1]/inter(12230))], axis = 0)
-    #max_err[max_err < 0] = 0
-    #  #Use with abs to obtain the absolute differences in the thin differences plot. Otherwise, remove abs to obtain the filled in differences plots. 
-
-    #min_err = np.amin([np.subtract(er1, t[:,1]/inter(12230)), 
-    #                   np.subtract(er2, t[:,1]/inter(12230)), 
-    #                   np.subtract(er3, t[:,1]/inter(12230))], axis = 0)
-    #min_err[min_err > 0] = 0
-    #  # Finding the upper difference limit for our data compared to other models (switch the < and > to the opposite opperator to find the lower difference limits).
-   
-    #ax.fill_between(t[:,0], t[:,1]/inter(12230) + max_err, t[:,1]/inter(12230),
-    #                facecolor = 'c', alpha = 0.35, label = 'Maximum difference (BaSS/GirS/MarS)')
-    #ax.fill_between(t[:,0], t[:,1]/inter(12230), t[:,1]/inter(12230) + min_err,
-    #                facecolor = 'c', alpha = 0.35)
-
-    #max_err = np.amax([np.subtract(er1, t[:,1]/inter(12230)), 
-    #                   np.subtract(er2, t[:,1]/inter(12230)), 
-    #                   np.subtract(er3, t[:,1]/inter(12230))], axis = 0)
-    #max_err[max_err > 0] = 0
-
-    #min_err = np.amin([np.subtract(er1, t[:,1]/inter(12230)), 
-    #                   np.subtract(er2, t[:,1]/inter(12230)), 
-    #                   np.subtract(er3, t[:,1]/inter(12230))], axis = 0)
-    #min_err[min_err < 0] = 0
-    #  # Finding the upper difference limit for our data compared to other models (switch the < and > to the opposite opperator to find the lower difference limits).
-   
-    #ax.fill_between(t[:,0], t[:,1]/inter(12230) + max_err, t[:,1]/inter(12230),
-    #               facecolor = 'r', alpha = 0.35, label = 'Minimum difference (BaSS/GirS/MarS)')
-    #ax.fill_between(t[:,0], t[:,1]/inter(12230), t[:,1]/inter(12230) + min_err,
-    #               facecolor = 'r', alpha = 0.35)
-
-    #ax2 =  plt.subplot(111)
-    #max_err[(18050-9350)+150:(18800-9350)+150] = np.nan
-    #    # Position of telluric gap
-    #gauss = ndimage.gaussian_filter(max_err[max_err!=np.nan], sigma = 1)
-    #    # Applies a basic Gaussian filter of sigma=1 to the errors, to aliken them to our dateset from Meneses-Goyita 2015. 
-    #    # Also attempts to ignore the telluric line region
-    #ax2.plot(t[:,0][max_err!=np.nan], gauss, 'k', linewidth = lwid)
-    #plt.xlabel(r'$\lambda (\AA)$', fontsize = font)
-    #plt.ylabel(r'$\Delta F/F_{12230}$', fontsize = font)
-    # 	# A basic line plot for just errors, to be fitted below the standard plots
 
     ax.legend(fontsize = font)
     ax.tick_params(axis='both', labelsize = font)
