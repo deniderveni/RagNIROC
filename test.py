@@ -24,11 +24,11 @@ dl = 0.1
 iso = 'padova' # options are padova or dartmouth
 
 
-stpars.stpars(n_ms, n_rg, feh, afe, age, fig = True, iso = iso)
+#stpars.stpars(n_ms, n_rg, feh, afe, age, fig = True, iso = iso)
 
 #interp.interpall( n_ms=n_ms, n_rg=n_rg, feh=feh, afe=afe, age=age, Z=Z )
 
-#interp.interpall()
+interp.interpall()
 
 #SSP_model.ssp_model(Z, feh = feh, afe = afe, age = age, imf = imf, fwhm = 2.5, n_ms = n_ms, n_rg = n_rg, dl = dl, iso = iso)
 
