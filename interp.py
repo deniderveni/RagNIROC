@@ -5,8 +5,19 @@ import json
 from scipy.interpolate import RBFInterpolator
 from retrieve_irtf import param_retrieve, get_spectra, set_spectra_name
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_squared_error, roc_curve, auc
+from scipy.spatial import distance
+from scipy.spatial.distance import cdist
 from sklearn.neighbors import NearestNeighbors
+
 from concurrent.futures import ProcessPoolExecutor, as_completed
+
+epsilons   = np.linspace(0.5, 5.0, 10)
+smoothings = np.logspace(-1, 0, 5) #np.linspace(0, 10, 20)
+kernels    = ['gaussian', 'multiquadric'] # 'cubic' , 'inverse_multiquadric', 'linear', 'thin_plate_spline',
+min_neigh  = 4
+max_neigh  = 6
+
 
 def evaluate_error(y_true, y_pred):
     return np.mean((y_true - y_pred) ** 2)
@@ -25,15 +36,33 @@ def interpolate_one_star(i, param, ID, true_spectra, indices_list, distances_lis
         best_mse      = float('inf')
         best_settings = {}
 
+        # # Refit with inverse weighted neighbours
+        # weighted_params  = []
+        # weighted_spectra = []
+        # for idx, dist in zip(indices[:best_settings['n_neighbours']], distances[:best_settings['n_neighbours']]):
+        #     weight = 1 / (dist + 1e-8)
+        #     weighted_params.append(good_params[idx] * weight)
+        #     weighted_spectra.append(spectra[idx] * weight)
+
+        # # Normalize the weights
+        # weight_sum       = np.sum([1 / (dist + 1e-8) for dist in distances[:best_settings['n_neighbours']]])
+        # weighted_params  = np.array(weighted_params) / weight_sum
+        # weighted_spectra = np.array(weighted_spectra) / weight_sum
+
         for n_neigh in range(min_neigh, len(indices) + 1):
-            train_params  = scaler.transform(np.array([good_params[j] for j in indices[:n_neigh]]))
-            train_spectra = np.array([spectra[j] for j in indices[:n_neigh]])
+            neighbour_params = good_params[indices[:n_neigh]]
+            neighbour_spectra = spectra[indices[:n_neigh]]
 
             for epsilon in epsilons:
                 for smoothing in smoothings:
                     for kernel in kernels:
+
+                        # In these kernel cases, effect of epsilon and spline is identical
+                        if kernel in ["linear", "thin_plate_spline", "cubic", "quintic"] and epsilon != 1: 
+                            continue                  
+                            continue
                         try:
-                            model = RBFInterpolator(train_params, train_spectra,
+                            model = RBFInterpolator(neighbour_params, neighbour_spectra,
                                                     kernel=kernel,
                                                     epsilon=epsilon,
                                                     smoothing=smoothing)
@@ -58,13 +87,14 @@ def interpolate_one_star(i, param, ID, true_spectra, indices_list, distances_lis
             print(f"Skipping star {ID} due to interpolation failure")
             return None
 
-        # Refit with the best setup
-        train_params  = scaler.transform(np.array([good_params[j] for j in indices[:best_settings['n_neighbours']]]))
-        train_spectra = np.array([spectra[j] for j in indices[:best_settings['n_neighbours']]])
-        model         = RBFInterpolator(train_params, train_spectra,
-                                        kernel=best_settings['kernel'],
-                                        epsilon=best_settings['epsilon'],
-                                        smoothing=best_settings['smoothing'])
+        # Refit with best settings
+        neighbour_params  = good_params[indices[:best_settings['n_neighbours']]]
+        neighbour_spectra = spectra[indices[:best_settings['n_neighbours']]]
+
+        model = RBFInterpolator(neighbour_params, neighbour_spectra,
+                                kernel=best_settings['kernel'],
+                                epsilon=best_settings['epsilon'],
+                                smoothing=best_settings['smoothing'])
         int_spectra = model(target_param_scaled)[0]
 
         output   = np.column_stack((wavelength, int_spectra))
@@ -106,6 +136,7 @@ def interpolate_one_star(i, param, ID, true_spectra, indices_list, distances_lis
         print(f"Failed for star {ID}: {e}")
         return None
 
+
 def interpall(max_passes=100):
     IDs, Teffs, loggs, Zs = param_retrieve()
     param_vectors = np.vstack((Teffs, loggs, Zs)).T
@@ -133,12 +164,6 @@ def interpall(max_passes=100):
     scaler             = StandardScaler()
     good_params_scaled = scaler.fit_transform(good_params)
 
-    epsilons   = np.logspace(-1, 1, 5)
-    smoothings = np.logspace(-3, -1, 5)
-    kernels    = ['gaussian', 'linear', 'cubic', 'thin_plate_spline', 'multiquadric', 'inverse_multiquadric']
-    min_neigh  = 4
-    max_neigh  = 10
-
     # --- Precompute Nearest Neighbours ---
     print("Precomputing nearest neighbours...")
     nbrs = NearestNeighbors(n_neighbors=max_neigh, algorithm='auto').fit(good_params_scaled)
@@ -164,7 +189,7 @@ def interpall(max_passes=100):
     all_errors   = []
     futures      = []
 
-    with ProcessPoolExecutor() as executor:
+    with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
         for i, (param, ID, true_spectra) in enumerate(zip(good_params, good_IDs, spectra)):
             futures.append(
                 executor.submit(interpolate_one_star, i, param, ID, true_spectra,
