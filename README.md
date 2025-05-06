@@ -1,13 +1,29 @@
-# MIOLNIR: Modelling and Interpolation across Observed Luminosities in the Near Infra Red
-MIOLNIR utilises an interpolation method that has stringent limitations on its choice of stars. In other words, they must be worthy.
+# RagNIROC: A new-age, ML interpolator for the Near Infrared spectrum -- based on [MIOLNIR](https://github.com/deniderveni/MIOLNIR)
+
+MIOLNIR: Modelling and Interpolation across Observed Luminosities in the Near Infra Red
+MIOLNIR utilised an interpolation method that has stringent limitations on its choice of stars. In other words, they must be worthy.
+It was a custom, simplistic Radial Basis Function (RBF) interpolator - it was also my first ever full Python project! Built alongside Christopher Wilson (see MIOLNIR)
+
+Meanwhile, RagNIROC uses a formal RBF interpolator to optimise fitting hyperparameters for nearby stellar spectra, with greater elegance and modularity.
+It also begins to use regression techniques to create spectral models which, once I have greater confidence in its ability, will be saved and used in its finality to predict stellar spectra.
 
 
-WIP. Run test.py to get an SSP
+This repository is a WIP. It is fully functional but currently contains relics from MIOLNIR.
+Over time, I will develop this into a formal, stand-alone package. For now, it serves as a proof-of-concept for the methodology.
 
-test.py sets inital values for all the variables. It then runs the following programs:
-  - stpars - This code calculates the Teff, logg and Z components of several stars along an isochrone. Currently, the only isochrone in use is Padova age 10Gyr
-  - interpall - This creates interpolated spectra for all the stars contained in the stpars output file
-  - SSP_model - This combines all the spectra together to create an SSP.
+## Usage
+
+Run `run.py` to:
+- Create a Stellar Population
+- 
+
+`run.py` sets initial values for all the variables where necessary. It then runs the following programs:
+  - **Old code** `stpars()` - This code calculates the Teff, logg and Z components of several stars along an isochrone. Currently, the only isochrone in use is Padova age 10Gyr, but outputs exist for all types.
+  - `interpall()` - This creates interpolated spectra for all the stars contained in the stpars output files, using an RBF Interpolation scheme.
+  - **Old code** `SSP_model()` - This combines all the spectra together to create an SSP.
+
+There is also `SuitabilityPlots.py`:
+  - This creates a set of plots based on the fitting parameters from `interpall()`. 
   
 
 :shipit:
@@ -24,11 +40,7 @@ Any troubles see http://mfouesneau.github.io/docs/pyphot/.
 
 Next just clone this repository
 ```unix
-git clone https://github.com/ChrisJamesWilson/MIOLNIR
-```
-and then run test.py while within the folder python_ssp to test installation
-```unix
-python3 test.py
+git clone https://github.com/deniderveni/RagNIROC
 ```
 
 The contained codes and their functions:
@@ -60,44 +72,126 @@ gettracks uses the previously defined parameters to find the correct isochrone. 
 
 This outputs the filename and path for the parameter file given the previously defined inputs.
 
+# Stellar Spectra Interpolation
+
+This project generates interpolated stellar spectra using the IRTF spectral library and stellar parameters (Teff, logg, Z). It includes utilities for population synthesis, performance testing, and classification evaluation.
+
+---
 
 ## interp.py
 
-interp.py contains two functions: interpall() and interpolate()
+This script handles stellar spectra interpolation based on target stellar parameters.
 
-**interpolate(Teff_new, logg_new, Z_new)**
-  - interpolate requires the following required inputs
-      - Teff_new = the effective temperature of the new star n Kelvins
-      - logg_new = the log(g) of the new star
-      - Z = the metallicity of the new star in Z
-  
-This is the main interpolator. Given the above parameters it will interpolate a spectra from the data in the irtf folder. The spectra will be stored in Stellar_Spectra/ along with a plot of the spectra.
-It also includes a highly imperfect, unifished idea for improved functionality of the interpolator.
+### Functions
 
-**interpall(n_ms, n_rg, feh, afe, age, Z)**
+#### `interpolate(Teff_new, logg_new, Z_new, plot=True, save=True)`
 
-interpall's inputs have already been defined.
+Interpolates a spectrum from the IRTF library for a star with the given parameters.
 
-interpall uses interpolate() to calculate spectra for all stars that are in the paramater file created in _stpars.py_.
+**Parameters:**
+- `Teff_new`: Effective temperature in Kelvin  
+- `logg_new`: Surface gravity (log(g))  
+- `Z_new`: Metallicity  
+- `plot`: (bool) Save diagnostic plot to `Stellar_Spectra/` (default: `True`)  
+- `save`: (bool) Save `.npy` file to `Stellar_Spectra/` (default: `True`)  
+
+**Returns:**
+- Wavelength array  
+- Flux array (interpolated spectrum)  
+- List of IDs of the three closest spectra used in interpolation
+
+---
+
+#### `interpall(n_ms, n_rg, feh, afe, age, Z)`
+
+Interpolates spectra for an entire isochrone population using stellar parameters generated by `stpars.py`.
+
+**Parameters:**
+- `n_ms`: Number of main sequence stars  
+- `n_rg`: Number of red giant stars  
+- `feh`: [Fe/H] metallicity  
+- `afe`: [α/Fe] abundance  
+- `age`: Stellar population age (Gyr)  
+- `Z`: Metallicity for interpolation  
+
+Saves spectra and plots in the `Stellar_Spectra/` directory.
+
+---
+
+#### `test_interpolation(sample_size=50)`
+
+Evaluates interpolation accuracy by holding out `sample_size` spectra and comparing predictions to true values.
+
+**Parameters:**
+- `sample_size`: Number of IRTF spectra to hold out for testing  
+
+**Output:**
+- RMSE calculation  
+- Diagnostic plots  
+- Prints interpolation quality statistics
+
+---
+
+#### `evaluate_classification(sample_size=50, param='Teff', n_bins=3)`
+
+Performs classification testing using k-NN on IRTF spectra.
+
+**Parameters:**
+- `sample_size`: Number of spectra to sample  
+- `param`: Stellar parameter to classify (`'Teff'`, `'logg'`, or `'Z'`)  
+- `n_bins`: Number of parameter bins to classify  
+
+**Output:**
+- ROC curves  
+- Precision/recall metrics  
+- Confusion matrix  
+- Diagnostic plots
+
+---
 
 ## retrieve_irtf.py
 
-retrieve_irtf.py contains several functions: param_retrieve(), get_spectra() and set_spectra_name()
+Utilities for retrieving and processing IRTF spectral data and metadata.
 
-**param_retrieve()**
+### Functions
 
-param_retrieve() requires no inputs and simply converts the _irtf_param.txt_ file to a more usable format.
+#### `param_retrieve()`
 
-**get_spectra(ID)**
+Reads `irtf_param.txt` and returns structured stellar parameter data.
 
-  - get_spectra requires only one input
-    - ID = the ID of the irtf file you require (ie 'IRL012')
+**Returns:**
+- Structured NumPy array with fields like ID, Teff, logg, Z, etc.
 
-This function retrieves an irtf .fits file for a specific ID into a usable format and returns it.
+---
 
-**set_spectra_name(Teff, logg, Z)**
+#### `get_spectra(ID)`
 
-This function takes the previously defined paramaters and outputs a filename for the interpolated spectra in _interp.py_
+Retrieves a spectrum from the IRTF FITS files.
+
+**Parameters:**
+- `ID`: Spectrum ID string (e.g. `'IRL012'`)  
+
+**Returns:**
+- Wavelength array  
+- Flux array
+
+---
+
+#### `set_spectra_name(Teff, logg, Z)`
+
+Generates a standardised filename based on stellar parameters.
+
+**Parameters:**
+- `Teff`: Effective temperature  
+- `logg`: Surface gravity  
+- `Z`: Metallicity  
+
+**Returns:**
+- Formatted filename string for saving interpolated spectra
+
+---
+
+
 
 ## SSP_model.py
 
