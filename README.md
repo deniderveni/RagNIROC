@@ -14,21 +14,25 @@ Over time, I will develop this into a formal, stand-alone package. For now, it s
 ## Usage
 
 Run `run.py` to:
-- Create a Stellar Population
+- Train and optimise a model synthetic spectra for existing stars
+- Save the model for Stellar spectral synthesis
+- Generate purely synthetic spectra for theoretical stars
+- Create a Stellar Population based on trained model
 
 
 `run.py` sets initial values for all the variables where necessary. It then runs the following programs:
   - **Old code** `stpars()` - This code calculates the Teff, logg and Z components of several stars along an isochrone. Currently, the only isochrone in use is Padova age 10Gyr, but outputs exist for all types.
-  - `interpall()` - This creates interpolated spectra for all the stars contained in the stpars output files, using an RBF Interpolation scheme.
+  - `interpall()` - This creates interpolated spectra for all the stars contained in the stpars output files, using an RBF Interpolation scheme. It can also be used with an existing saved model to generate synthetic spectra for given parameters
+  - `FitModelAndCheckSuitability.main()` - This read through the fit data, creates an optimised model for the breadth of chosen parameters, and saves this to disk. Also produces figures and data for assessment.
   - **Old code** `SSP_model()` - This combines all the spectra together to create an SSP.
 
-There is also `SuitabilityPlots.py`:
-  - This creates a set of plots based on the fitting parameters from `interpall()`. 
+There is also `SSP_comparison.py`:
+  - This can be run to assess the suitability of the generated model in creating a complete SSP. **N.B: This is currently only intended for use for a single stellar make-up for showcasing**
   
 
 ## Installation
 
-To install Pyphot must first be installed:
+To use, Pyphot must first be installed:
 
 ```unix
 pip install git+https://github.com/mfouesneau/pyphot
