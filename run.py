@@ -12,6 +12,7 @@ import numpy as np
 from astropy.io import ascii
 
 import FitModelAndCheckSuitability
+import SSP_comparison
 
 import os
 import shutil
@@ -59,13 +60,13 @@ iso  = 'padova' # options are padova or dartmouth
 
 
 ## Do an initial interpolation of all existing stars - grid search to find best parameters and save them
-# interp.interpall()
+interp.interpall()
 
 ## Fit the model to the data, produce some plots to check the fit
-# FitModelAndCheckSuitability.main()
+FitModelAndCheckSuitability.main()
 
 ## Copy the files to a backup directory with a timestamp for now
-# CopyFiles()
+CopyFiles()
 
 ## Generate stellar parameters for the chosen stellar constituency in isochrone space
 stpars.stpars(n_ms, n_rg, feh, afe, age, fig = False, iso = iso)
@@ -78,10 +79,5 @@ interp.interpall(generated_stars=True, use_model=True, n_ms=n_ms, n_rg=n_rg, feh
 ## Generate an SSP model with the chosen stellar parameters and compare to existing
 SSP_model.ssp_model(Z, fwhm = 2.5, feh = feh, afe = afe, age = age, imf = imf, n_ms = n_ms, n_rg = n_rg, dl = dl, iso = iso)
 
-
-# stpars.stpars(n_ms, n_rg, feh, afe, age, fig = False, iso = iso)
-# interp.interpall( n_ms=n_ms, n_rg=n_rg, feh=feh, afe=afe, age=age, Z=Z )
-# SSP_model.ssp_model(Z, feh = feh, afe = afe, age = age, imf = imf, fwhm = 2.5, n_ms = n_ms, n_rg = n_rg, dl = dl, iso = iso)
-
-#file_ssp = SSP_model.set_ssp_filename(feh, afe, age = age, imf = imf)
-#t = ascii.read(file_ssp)
+## Generate comparative plots
+# SSP_comparison.RunAll() # Only works for this example TODO: Fix naming for all combinations (if valid)
