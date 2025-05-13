@@ -15,7 +15,7 @@ Over time, I will develop this into a formal, stand-alone package. For now, it s
 
 Run `run.py` to:
 - Create a Stellar Population
-- 
+
 
 `run.py` sets initial values for all the variables where necessary. It then runs the following programs:
   - **Old code** `stpars()` - This code calculates the Teff, logg and Z components of several stars along an isochrone. Currently, the only isochrone in use is Padova age 10Gyr, but outputs exist for all types.
@@ -25,8 +25,6 @@ Run `run.py` to:
 There is also `SuitabilityPlots.py`:
   - This creates a set of plots based on the fitting parameters from `interpall()`. 
   
-
-:shipit:
 
 ## Installation
 
