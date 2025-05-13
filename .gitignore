@@ -1,0 +1,9 @@
+SSP_Spectra/
+Set*/
+Stellar_Spectra/
+Stellar_pars/
+SuitabilityPlots/
+__pycache__/
+backup_*/
+DARTMOUTH/temp.txt
+st_spectra/
