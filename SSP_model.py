@@ -83,18 +83,13 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
     #---------------------------------
     # CHECKING INPUTS
     #---------------------------------
-    if feh is None:
-        feh = input('Need to specify [Fe/H]: ')
-    if afe is None:
-        afe = input('Need to specify [alpha/Fe]: ')
-    if age is None:
-        age = input('Need to specify population age in Gyr: ')
-    if imf is None:
-        imf = input('Need to specify IMF (Salpeter, Kroupa, Unimodal): ')
+    if feh is None: feh = input('Need to specify [Fe/H]: ')
+    if afe is None: afe = input('Need to specify [alpha/Fe]: ')
+    if age is None: age = input('Need to specify population age in Gyr: ')
+    if imf is None: imf = input('Need to specify IMF (Salpeter, Kroupa, Unimodal): ')
     imf = imf.lower()
     
-    if imf == 'unimodal' and slope is None:
-        print('IMF = unimodal, you need to specify a slope')
+    if imf == 'unimodal' and slope is None: print('IMF = unimodal, you need to specify a slope')
     
     if n_ms is None and n_rg is None and parfile is None:
         print('FILE WITH STELLAR PARAMETERS --> ???')
@@ -107,32 +102,24 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
     #---------------------------------
     # SETTING DEFAULT VALUES
     #---------------------------------    
-    if CFe_rgb is None:
-        CFe_rgb = CFe
-    if NFe_rgb is None:
-        NFe_rgb = NFe
-    if OFe is None:
-        OFe = afe
-    if MgFe is None:
-        MgFe = afe
-    if SiFe is None:
-        SiFe = afe
-    if CaFe is None:
-        CaFe = afe
-    if TiFe is None:
-        TiFe = afe
+    if CFe_rgb is None: CFe_rgb = CFe
+    if NFe_rgb is None: NFe_rgb = NFe
+    if OFe is None:     OFe = afe
+    if MgFe is None:    MgFe = afe
+    if SiFe is None:    SiFe = afe
+    if CaFe is None:    CaFe = afe
+    if TiFe is None:    TiFe = afe
         
     #---------------------------------
     # OUTPUT FILE NAMES
     #---------------------------------
     exists = os.path.isfile('SSP_Spectra/')
-    if exists is False:
-        os.system('mkdir SSP_Spectra')
+    if exists is False: os.system('mkdir SSP_Spectra')
         
     file_ssp = set_ssp_filename(feh, afe, age, imf, slope, CFe, CFe_rgb, NFe, NFe_rgb, OFe, MgFe,
-                              SiFe, CaFe, TiFe, NaFe, AlFe, BaFe, EuFe)
-    file_fig = file_ssp + '.jpg'
-    logfile = file_ssp + '.log'
+                                SiFe, CaFe, TiFe, NaFe, AlFe, BaFe, EuFe)
+    file_fig = file_ssp + '.png'
+    logfile  = file_ssp + '.log'
     
     #---------------------------------
     # WRITE INFO IN LOGFILE
@@ -142,39 +129,28 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
     log.write('----------------------- INPUT PARAMETERS -----------------------\n')
     log.write('----------------------------------------------------------------\n')
     
-    log.write('System time:  ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') 
-                                                                    + '\n')
+    log.write('System time:  ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '\n')
     
-    temp = '%-26s%8.2f%4s' % ('Isochrone age: ', age, 'Gyr')
-    log.write(temp + '\n')
-    temp = '%-26s%8.2f%2s' % ('FWHM: ',fwhm, ' A')
-    log.write(temp + '\n')
+    log.write('%-26s%8.2f%4s\n' % ('Isochrone age: ', age, 'Gyr'))
+    log.write('%-26s%8.2f%2s\n' % ('FWHM: ',fwhm, ' A'))
 
-    if imf == 'unimodal':
-        temp = '%-26s%8s%8s%8.2f' % ('IMF: ', imf, ' slope: ', slope)
-    else:
-        temp = '%-26s%8s' % ('IMF: ', imf)
-    log.write(temp + '\n')
+    if imf == 'unimodal':  log.write('%-26s%8s%8s%8.2f \n' % ('IMF: ', imf, ' slope: ', slope) )
+    else:                  log.write('%-26s%8s\n' % ('IMF: ', imf) )
     
     log.write('Abundances:\n')
-    temp = '%8s%8s%8s%8s%8s%8s%8s%8s%8s%8s' % ('[Fe/H]', '[a/Fe]', 
-                  '[C/Fe]', '[N/Fe]', '[O/Fe]', '[Mg/Fe]', '[Si/Fe]', 
-                  '[Ca/Fe]', '[Ti/Fe]', '[Na/Fe]')
-    log.write(temp + '\n')
+    log.write('%8s%8s%8s%8s%8s%8s%8s%8s%8s%8s\n' % ('[Fe/H]', '[a/Fe]', '[C/Fe]', '[N/Fe]', '[O/Fe]', '[Mg/Fe]', '[Si/Fe]', '[Ca/Fe]', '[Ti/Fe]', '[Na/Fe]'))
     
-    temp = '%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f' % (feh, afe,
-                                CFe, NFe, OFe, MgFe, SiFe, CaFe, TiFe, NaFe)
-    log.write(temp)
+    log.write('%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f' % (feh, afe,CFe, NFe, OFe, MgFe, SiFe, CaFe, TiFe, NaFe)) #TODO: newline here?
     
     
     #---------------------------------
     # CONSTANTS
     #---------------------------------
     Lsun = 3.839e33  # erg s-1
-    pc = 3.086e18 # parsec in cm
-    G = 6.67300e-11  # m3 kg-1 s-2
+    pc   = 3.086e18 # parsec in cm
+    G    = 6.67300e-11  # m3 kg-1 s-2
     Msun = 1.9891e33 # g
-    sb = 5.67e-5     # erg cm-2 s-1 K-4
+    sb   = 5.67e-5     # erg cm-2 s-1 K-4
     Rsun = np.sqrt(Lsun / (4 * np.pi * sb * 5777**4))*(10**(-2)) # = 6.955e10 cm
     aSun = 4 * np.pi * Rsun**2 # cm2
     
@@ -185,22 +161,22 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
 
     nstars = len(t)
     
-    Teffs = np.zeros(nstars)    
-    loggs = np.zeros(nstars)
+    Teffs  = np.zeros(nstars)
+    loggs  = np.zeros(nstars)
     masses = np.zeros(nstars)
-    lumis = np.zeros(nstars)
-    phase = list(itertools.repeat("ms", nstars))
+    lumis  = np.zeros(nstars)
+    phase  = list(itertools.repeat("ms", nstars))
     
     for i in range(nstars):
-        Teffs[i] = t[i][0]
-        loggs[i] = t[i][1]
+        Teffs[i]  = t[i][0]
+        loggs[i]  = t[i][1]
         masses[i] = t[i][2]
-        lumis[i] = 10**t[i][3]
-        phase[i] = t[i][4]
+        lumis[i]  = 10**t[i][3]
+        phase[i]  = t[i][4]
     
     radii = np.sqrt(lumis * Lsun / (4 * np.pi * sb * Teffs**4)) # cm
     radii = radii*(10**(-2)) # m
-    area = 4 * np.pi * radii**2 # m2
+    area  = 4 * np.pi * radii**2 # m2
     
     
     log.write('\nReading stellar parameters from:  ' + parsfile + '\n')
@@ -209,41 +185,39 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
     #---------------------------------
     # MASS BINS
     #---------------------------------
-    logL = np.log10(lumis)
+    logL        = np.log10(lumis)
     logL_breaks = np.zeros(len(logL))
-    nn = len(lumis)
+    nn          = len(lumis)
     
     lum_breaks = np.zeros(nn+1)
     
-    for i in range(nn+1):
-        if i == 0:
-            lum_breaks[i] = lumis[0]
-        if i > 0 and i < nn:
-            lum_breaks[i] = np.mean([lumis[i-1],lumis[i]])
-        if i == nn:
-            lum_breaks[i] = lumis[nn-1]
+    for i in range(nn+1): 
+        if  i == 0          : lum_breaks[i] = lumis[0]
+        if  i > 0 and i < nn: lum_breaks[i] = np.mean([lumis[i-1],lumis[i]])
+        if  i == nn         : lum_breaks[i] = lumis[nn-1]
 
     
     isofile = stpars.gettracks(feh, afe, age, iso = iso)
-    F0 = 1.021e-20# 1.1596e-10 #Vega flux of Hband in erg cm-2 s-1 Hz-1
-    t = np.loadtxt(isofile)
+    F0      = 1.021e-20# 1.1596e-10 #Vega flux of Hband in erg cm-2 s-1 Hz-1
+    t       = np.loadtxt(isofile)
+
     if iso.upper() == 'DARTMOUTH':
-        isoteff = 10**t[:,2]
-        isologg = t[:,3]
-        isomass = t[:,1]
-        isologL = t[:,4]
+       isoteff      = 10**t[:,2]
+       isologg      = t[:,3]
+       isomass      = t[:,1]
+       isologL      = t[:,4]
     if iso.upper() == 'PADOVA':
-        isoteff = 10**t[:,6]
-        isologg = t[:,7]
-        isomass = t[:,2]
-        isologL = t[:,5]
-        isoHFlux = 10**(-t[:,30]/2.5)*F0
-        isologLH = np.log10(isoHFlux*4*np.pi*(10*pc)**2)
+       isoteff      = 10**t[:,6]
+       isologg      = t[:,7]
+       isomass      = t[:,2]
+       isologL      = t[:,5]
+       isoHFlux     = 10**(-t[:,30]/2.5)*F0
+       isologLH     = np.log10(isoHFlux*4*np.pi*(10*pc)**2)
     print(iso)
 
-    isoL = 10**isologLH
-    mass_breaks = interp(isologLH, np.log10(lum_breaks), isomass)
-    mass_breaks[0] = masses[0]
+    isoL            = 10**isologLH
+    mass_breaks     = interp(isologLH, np.log10(lum_breaks), isomass)
+    mass_breaks[0]  = masses[0]
     mass_breaks[-1] = masses[-1]
 
 
@@ -261,16 +235,13 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
     #---------------------------------
     fraction_M = np.zeros(len(masses))
     fraction_L = np.zeros(len(masses))
-    sum_flux = np.zeros(len(masses))
-    L_corr = np.zeros(len(masses))
+    sum_flux   = np.zeros(len(masses))
+    L_corr     = np.zeros(len(masses))
     
     log.write('SSP divided in:  ' + str(nstars) + ' mass bins\n')
     log.write('Information about each bin: \n')
     log.write('----------------------\n')
-    data = '%5s%10s%10s%10s%10s%7s%7s%10s%10s%10s%10s%10s%10s%10s' % ('i', 
-        'logL_i', 'logL_f', 'Mass_i', 'Mass_f', 'Teff', 'logg', 'Mass',
-        'logLstar', 'Radius', 'logLbin', 'Lcorr', 'frac_M', 'frac_L')
-    log.write(data + '\n')
+    log.write('%5s%10s%10s%10s%10s%7s%7s%10s%10s%10s%10s%10s%10s%10s\n' % ('i', 'logL_i', 'logL_f', 'Mass_i', 'Mass_f', 'Teff', 'logg', 'Mass', 'logLstar', 'Radius', 'logLbin', 'Lcorr', 'frac_M', 'frac_L'))
     log.write('    -----------------------------------------------------------------------------------------------------------------------------\n')
     
     for i in range(nstars):
@@ -288,36 +259,29 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
         #---------------------------------
         # READ CONVOLVED STELLAR SPECTRA
         #---------------------------------
-        tt = np.loadtxt('st_spectra')
-        lamda = tt[:,0]
-        hfilt = pyphot.get_library()['GROUND_BESSELL_H']
-        units = 1
-        #units = 1e-8 * 4 * np.pi  # erg / (s cm2 cm ster) --> erg / (s cm2 A)
+        tt     = np.loadtxt('st_spectra')
+        lamda  = tt[:,0]
+        hfilt  = pyphot.get_library()['GROUND_BESSELL_H']
+        units  = 1
+        # units = 1e-8 * 4 * np.pi  # erg / (s cm2 cm ster) --> erg / (s cm2 A)
         # Scale flux according to the star surface area and normalize by Lsun
         st_flux = tt[:,1]*(lumis[i])#*hfilt.get_flux(tt[:,0],tt[:,1])# * area[i] / Lsun # erg / (s cm2 A) --> Lsun / A
         
-        if i == 0:
-            ssp_flux = np.zeros(len(st_flux))
+        if i == 0: ssp_flux = np.zeros(len(st_flux))
         
         # Number of stars formed between mass_breaks[i] and mass_breaks[i+1] (per unit of mass):
-        #  sum(phi_m * dm) = phi_mdm
+
         dm_break = mass_breaks[i+1] - mass_breaks[i]
-#        for k in range(len(mass_breaks)):
-#            print(str(mass_breaks[k]))
+
         dm = dm_break/1000
-        if dm > 0.01:
-            dm = 0.001
+        if dm > 0.01: dm = 0.001
         
-#        ndm = round((mass_breaks[i+1] - mass_breaks[i]) / dm)
         masses_temp = np.arange(mass_breaks[i], mass_breaks[i+1], dm)
-	
-        iso_L_temp = 10**interp(isomass, masses_temp, isologLH)
+        iso_L_temp  = 10**interp(isomass, masses_temp, isologLH)
 
-
-#        print(str(iso_L_temp))
-        phi_mdm = 0
-        mass_bin = 0
-        L_bin = 0
+        phi_mdm    = 0
+        mass_bin   = 0
+        L_bin      = 0
         L_star_bin = 0
         
         #---------------------------------
@@ -328,21 +292,21 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
                 cc = 1
                 if masses_temp[j] >= 1.0 and masses_temp[j] < 100: x = 2.7
                 if masses_temp[j] >= 0.5 and masses_temp[j] < 1:
-                    x = 2.3
+                    x  = 2.3
                     cc = ((1.0**(-2.7)) / 1.0**(-2.3))
                 if masses_temp[j] >= 0.08 and masses_temp [j] < 0.5:
-                    x = 1.3
+                    x  = 1.3
                     cc = ((0.5**(-2.3)) / 0.5**(-1.3)) * \
                         ((1.0**(-2.7)) / 1.0**(-2.3))
                 if masses_temp[j] >= 0.01 and masses_temp[j] < 0.08:
-                    x = 0.3
+                    x  = 0.3
                     cc = (0.08**(-1.3)) / 0.08**(-0.3) * ((0.5**(-2.3)) /
                             0.5**(-1.3)) * ((1.0**(-2.7)) / 1.0**(-2.3))
-                #Hmag = inter(masses_temp[j])
-                phi_m = masses_temp[j]**(-x) * cc
-                phi_mdm = phi_mdm + phi_m * dm
-                mass_bin = mass_bin + masses_temp[j] * phi_m * dm
-                L_bin = L_bin + iso_L_temp[j] * phi_m * dm# * Hmag
+
+                phi_m      = masses_temp[j]**(-x) * cc
+                phi_mdm    = phi_mdm + phi_m * dm
+                mass_bin   = mass_bin + masses_temp[j] * phi_m * dm
+                L_bin      = L_bin + iso_L_temp[j] * phi_m * dm# * Hmag
                 L_star_bin = L_star_bin + lumis[i] * phi_m * dm #* Hmag
         
         #---------------------------------
@@ -351,38 +315,38 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
         if imf == 'salpeter':
             x = 2.3
             for j in range(len(masses_temp)):
-                phi_m = masses_temp[j]**(-x)
-                phi_mdm += phi_m * dm
-                mass_bin += masses_temp[j] * phi_m * dm
-                L_bin += iso_L_temp[j] * phi_m * dm
+                phi_m       = masses_temp[j]**(-x)
+                phi_mdm    += phi_m * dm
+                mass_bin   += masses_temp[j] * phi_m * dm
+                L_bin      += iso_L_temp[j] * phi_m * dm
                 L_star_bin += lumis[i] * phi_m * dm
         
         #---------------------------------
         # IMF: UNIMODAL (SLOPE=x)
         #---------------------------------
-        if imf == 'unimodal':
+        elif imf == 'unimodal':
             x = slope
             for j in range(len(masses_temp)):
-                phi_m = masses_temp[j]**(-x)
-                phi_mdm += phi_m * dm
-                mass_bin += masses_temp[j] * phi_m * dm
-                L_bin += iso_L_temp[j] * phi_m * dm
+                phi_m       = masses_temp[j]**(-x)
+                phi_mdm    += phi_m * dm
+                mass_bin   += masses_temp[j] * phi_m * dm
+                L_bin      += iso_L_temp[j] * phi_m * dm
                 L_star_bin += lumis[i] * phi_m * dm
         
         #---------------------------------
         # SUM(S * PHI * DM)
         #---------------------------------
-        L_corr[i] = L_bin / L_star_bin
-        ssp_flux += st_flux * L_corr[i] * phi_mdm
-        fraction_M[i] = mass_bin
-        #sum_flux[i] = np.sum(st_flux) * (max(lamda) - min(lamda))
-        fraction_L[i] = L_bin
+        L_corr[i]      = L_bin / L_star_bin
+        ssp_flux      += st_flux * L_corr[i] * phi_mdm
+        fraction_M[i]  = mass_bin
+        #sum_flux[i]   = np.sum(st_flux) * (max(lamda) - min(lamda))
+        fraction_L[i]  = L_bin
         
     # normalization: sum(mass * phi_m * dm) = 1 Msun
-    L_SSP = np.sum(fraction_L)
+    L_SSP      = np.sum(fraction_L)
     fraction_L = fraction_L / L_SSP
-    ssp_flux = ssp_flux / np.sum(fraction_M)
-    ssp_flux = ssp_flux# * hfilt.get_flux(lamda,ssp_flux) # Hband unnormalisation and erg conversion
+    ssp_flux   = ssp_flux / np.sum(fraction_M)
+    ssp_flux   = ssp_flux# * hfilt.get_flux(lamda,ssp_flux) # Hband unnormalisation and erg conversion
     fraction_M = fraction_M / np.sum(fraction_M)
 
     #---------------------------------
@@ -416,11 +380,11 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
                                                        + '(Mbin/M_SSP)*100)',
            'frac_L           -> fraction of light in bin i (%, frac_L = '
                                                        + '(Lbin/L_SSP)*100)']
-    for i in range(len(data)):
-        log.write(data[i] + '\n')
+    
+    for i in range(len(data)): log.write(data[i] + '\n')
     
     datum = open(file_ssp, 'w+')
-    data = '%7.2f%13.5e' % (lamda[i], ssp_flux[i])
+    data  = '%7.2f%13.5e' % (lamda[i], ssp_flux[i])
     datum.write(data + '\n')
 
     for i in range(1,len(lamda)):
@@ -441,7 +405,7 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
     # PLOT SSP SPECTRA
     #---------------------------------
     
-    t = np.loadtxt(file_ssp)
+    t      = np.loadtxt(file_ssp)
     t[:,1] = t[:,1]/hfilt.get_flux(t[:,0],t[:,1])#Lsun
 
     plt.figure()
@@ -451,43 +415,44 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
     plt.ylabel(r'$F/F_{12230}$', fontsize = font)
     #plt.savefig(file_fig)
 
-    t_2 = np.loadtxt('./DATA/MarS/MARv_SAL_sed_NOCS_H_Z_0.029999999_Tg_1.0000000e+10')
-    t_3 = np.loadtxt('./DATA/GirS/GIRv_SAL_sed_NOCS_H_Z_0.029999999_Tg_1.0000000e+10')
-    t_4 = np.loadtxt('./DATA/BaSS/BASv_SAL_sed_NOCS_H_Z_0.029999999_Tg_1.0000000e+10')
+    t_2      = np.loadtxt('./DATA/MarS/MARv_SAL_sed_NOCS_H_Z_0.029999999_Tg_1.0000000e+10')
+    t_3      = np.loadtxt('./DATA/GirS/GIRv_SAL_sed_NOCS_H_Z_0.029999999_Tg_1.0000000e+10')
+    t_4      = np.loadtxt('./DATA/BaSS/BASv_SAL_sed_NOCS_H_Z_0.029999999_Tg_1.0000000e+10')
     t_2[:,0] = t_2[:,0] * 10000
     t_3[:,0] = t_3[:,0] * 10000
     t_4[:,0] = t_4[:,0] * 10000
 
-    ax = plt.subplot(111)
-    
-    lwid= 0.3
+    ax   = plt.subplot(111)
+    lwid = 0.3
 
-    inter=interp1d(t_2[:,0],t_2[:,1])
-    t_2norm = inter(12230)
+    inter                                     = interp1d(t_2[:,0],t_2[:,1])
+    t_2norm                                   = inter(12230)
     t_2[(18050-9350)+150:(18800-9350)+150, 1] = np.nan
     ax.plot(t_2[:,0],t_2[:,1]/inter(12230),'r', linewidth = lwid, label = 'MarS Model')
     er1 = t_2[:,1]/inter(12230)
 
-    inter = interp1d(t_3[:,0],t_3[:,1])
+    inter                                     = interp1d(t_3[:,0],t_3[:,1])
     t_3[(18050-9350)+150:(18800-9350)+150, 1] = np.nan
     ax.plot(t_3[:,0],t_3[:,1]/inter(12230),'g', linewidth = lwid, label = 'GirS Model')
     er2 = t_3[:,1]/inter(12230)
 
-    inter = interp1d(t_4[:,0],t_4[:,1])
+    inter                                     = interp1d(t_4[:,0],t_4[:,1])
     t_4[(18050-9350)+150:(18800-9350)+150, 1] = np.nan
     ax.plot(t_4[:,0],t_4[:,1]/inter(12230),'c', linewidth = lwid, label = 'BaSS Model')
     er3 = t_4[:,1]/inter(12230)
 
-    inter = interp1d(t[:,0],t[:,1])
+    inter                                   = interp1d(t[:,0],t[:,1])
     t[(18050-9350)+150:(18800-9350)+150, 1] = np.nan
-      # Removal of telluric lines from plots and calculations
+    # Removal of telluric lines from plots and calculations
     ax.plot(t[:,0],t[:,1]/inter(12230),'b', linewidth = lwid, label = 'Our Model')
   
 
     ax.legend(fontsize = font)
     ax.tick_params(axis='both', labelsize = font)
     print()
-    plt.show(block=True)
+    #plt.show(block=True)
+    plt.savefig(file_fig)
+
 
     
 ##################################
@@ -495,24 +460,20 @@ def ssp_model(Z, feh = None, afe = None, age = None, imf = None, slope = None,
 ##################################
 def interp(xin, xout, yin):
     Ninterpol = len(xout)
-    yout = np.zeros(Ninterpol)
-#    xin = np.array(xin)    
-    
-    
+    yout      = np.zeros(Ninterpol)
     
     for k in range(Ninterpol):
-#        t = xin[np.where(xin<xout[k])[0]]
-#        tind = len(t)-1
         tind = 0
         for i in range(len(xin)):
             if xin[i]<xout[k]:
                 tind += 1
         tind += -1
         
-        if tind <= 0:
+        if tind <= 0: 
             tind = 1
-        if tind >= len(xin) - 1:
+        elif tind >= len(xin) - 1: 
             tind = len(xin) - 2
+
         t1 = xin[tind-1]
         t2 = xin[tind]
         t3 = xin[tind+1]
@@ -537,47 +498,33 @@ def set_ssp_filename(feh, afe, age, imf, slope, CFe = 0.0, CFe_rgb = None, NFe =
     #---------------------------------
     # SETTING DEFAULT VALUES
     #---------------------------------    
-    if CFe_rgb is None:
-        CFe_rgb = CFe
-    if NFe_rgb is None:
-        NFe_rgb = NFe
-    if OFe is None:
-        OFe = afe
-    if MgFe is None:
-        MgFe = afe
-    if SiFe is None:
-        SiFe = afe
-    if CaFe is None:
-        CaFe = afe
-    if TiFe is None:
-        TiFe = afe
+    if CFe_rgb is None: CFe_rgb = CFe
+    if NFe_rgb is None: NFe_rgb = NFe
+    if OFe is None: OFe         = afe
+    if MgFe is None: MgFe       = afe
+    if SiFe is None: SiFe       = afe
+    if CaFe is None: CaFe       = afe
+    if TiFe is None: TiFe       = afe
+    
     imf = imf.lower()
     
-    temp = np.array([feh, afe, CFe, NFe, OFe, MgFe, SiFe, CaFe, TiFe,
-                     NaFe, AlFe, BaFe, EuFe])
+    temp = np.array([feh, afe, CFe, NFe, OFe, MgFe, SiFe, CaFe, TiFe,NaFe, AlFe, BaFe, EuFe])
     temp_s = list()
     for i in range(len(temp)):
-        if temp[i] < 0:
-            temp_s.append('-' + str(abs(temp[i])))
-        else:
-            temp_s.append('+' + str(abs(temp[i])))
+        if temp[i] < 0: temp_s.append('-' + str(abs(temp[i])))
+        else:           temp_s.append('+' + str(abs(temp[i])))
             
-    if age < 10:
-        age_s = '%1s%3.1f' % ('0',age)
-    else:
-        age_s = '%4.1f' % age
+    if age < 10: age_s = '%1s%3.1f' % ('0',age)
+    else: age_s        = '%4.1f' % age
     
     if CFe_rgb == CFe and NFe_rgb == NFe:
         CN_rgb = ''
     else:
-        if CFe_rgb >= 0:
-            tempC = '%1s%4.2f' % ('+', CFe_rgb)
-        else:
-            tempC = '%1s%4.2f' % ('-', CFe_rgb)
-        if NFe_rgb >= 0:
-            tempN = '%1s%4.2f' % ('+', NFe_rgb)
-        else:
-            tempN = '%1s%4.2f' % ('-', NFe_rgb)
+        if CFe_rgb >= 0: tempC = '%1s%4.2f' % ('+', CFe_rgb)
+        else:            tempC = '%1s%4.2f' % ('-', CFe_rgb)
+
+        if NFe_rgb >= 0: tempN = '%1s%4.2f' % ('+', NFe_rgb)
+        else:            tempN = '%1s%4.2f' % ('-', NFe_rgb)
         
         CN_rgb = 'CNrgb%s_%s' % (CFe_rgb, NFe_rgb)
     
