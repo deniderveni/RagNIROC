@@ -1,0 +1,16 @@
+These are the outputs for parameters amongst the final choices - after I filtered through and worked towards these ranges and kernels.
+
+If you want to see these as they would be 'in their normal habitat', it suffices to copy/move the files from this directory to the root ragniroc directory - one level up from here.
+(Should I have put these all in a single output to begin with? Yes. Did I? No. Why? Let's call it artistic freedom...)
+
+What was used for this?
+
+Well, simply `interp.py` was edited to have the following inputs (which are the defaults in the repository at the time of writing this):
+
+epsilons   = np.linspace(0.5, 5.0, 10)
+smoothings = np.logspace(-1, 0, 10)
+kernels    = ['gaussian']
+min_neigh  = 4
+max_neigh  = 6
+
+You can tinker with these values for different results and outputs. A summary of the results outputs (which are currently a little messy - again, 'artistic freedom'..) are given in the standard README
