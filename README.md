@@ -162,8 +162,48 @@ Generates a standardised filename based on stellar parameters.
 
 ---
 
-
-
 ## SSP_model.py
 
 SSP_model is an apdated version of https://github.com/marinatrevisan/SynSSP_PFANTnew.
+
+
+# Data Outputs:
+
+Several functions in this code produce some sort of figures or data dotted around in folders. Frankly, this was just poor planning and working with the ori
+ginal MIOLNIR's structure without disrupting it too much, but this will be fixed sooner or later.
+
+If you would like to see what the outputs look like without running this code, `git checkout main_w_output_data`, which is a branch that mirrors `main` but also uploads the output data, copied to a specific `test_outputs` folder.
+
+In any case, here is a run down of what to expect:
+
+- `Stellar_pars`:
+    - In this example, this will only produce 1 file, which contains a datasets that has been generated from a theoretical isochrone model, being pulled from the set of given spectral data in `run.py`
+
+- `Stellar_Spectra`:
+    - This contains all of the data for individual synthesised (predicted) spectra:
+        - `intspectra_Teff....`: Just csv files with synthesised data, used for the SSP population later
+        - `intspectra_ ... .png`: The specific spectra plotted for visualisation. If you were replicating real spectra (i.e. `interpall(generated_stars=False)`), the plots will contain both real and synthetic data for visual comparison. Otherwise, only the synthesised data will be present
+        - `convergence_summary.png`: A figure showing the RMS of each fitted star against the mean (only if `generated_stars=False`)
+        - `interpolation_results.json`: A .json file with the interpolation information stored for training/testing later
+        - `pretrained_interp_model.joblib`: The final predictive model after fitting against all data. This can be loaded later for a fast prediction instead of re-running the interpolation gridsearch (`interp.py`).
+
+- `SuitabilityPlots`:
+    - Contains Several sets of figures for general tracking of the fit performance:
+        - `All / Above_0.1 / Below_0.1`: Contains histograms and scatter plots for the distributions of the final best fit parameters for the chosen parameters being iterated through.
+            - `Above_0.1` and `Below_0.1` separates the data by those that were above and below 0.1 MSE, while `All` is everything. In other words, the data separated by the line in `convergence_summary.png`
+
+    - `GoodFits`:
+        - Scatter plots for the best parameters across all distributions and stars. Useful for quickly inspecting if there's some sort of patterns emerging (useless if fitting with too many or too few options).
+
+    - `ML_Parameter_Predictions`: After running `FitModelAndCheckSuitability.main()`, The produced model will predict the parameters for each star. This folder contains a series of scatter plots with the predictions and visual aid for the final decision tree produced by the model
+
+    - `Mean`/`All_ROC_Curves.png`: ROC curves for the true/false positive rate for the final prediction of real spectral data for mean of all stars / each star.
+    
+    -   predicted_best_parameters.csv`: A csv file for all of the best parameters
+
+- `SSP_Spectra`:
+    - A folder cotnaining the final SSP Spectra, including an illustrative figure with literature models, a csv of the data and an informative log
+    - `ComparisonPlots`: A folder with more comprehensive comparative plots of the new RagNIRoC model vs the old MIOLNIR interpolation vs accepted models from literature (BaSS/MarS/GiRS)
+
+
+
