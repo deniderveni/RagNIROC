@@ -37,14 +37,14 @@ def main():
     records = []
     for ID, d in data.items():
         rec = {
-            'ID': ID,
-            'epsilon': d['epsilon'],
-            'smoothing': d['smoothing'],
-            'kernel': d['kernel'],
-            'n_neighbours': int(d['n_neighbours']),  # Explicitly convert to integer
-            'mse': d['mse'],
+            'ID'           : ID,
+            'epsilon'      : d['epsilon'],
+            'smoothing'    : d['smoothing'],
+            'kernel'       : d['kernel'],
+            'n_neighbours' : int(d['n_neighbours']),     # Explicitly convert to integer
+            'mse'          : d['mse'],
             'mean_distance': np.mean(d[distances_name]),
-            'max_distance': np.max(d[distances_name]),
+            'max_distance' : np.max(d[distances_name]),
         }
         records.append(rec)
 
@@ -95,7 +95,7 @@ def main():
 
         # Correlation plots
         def plot_with_histogram_density_subset(x, y, hue, title, ylabel, output_filename):
-            kernels = sorted(sub_df[x].unique())
+            kernels    = sorted(sub_df[x].unique())
             neighbours = sorted(sub_df[hue].unique())
 
             fig, ax1 = plt.subplots(figsize=(12,6))
@@ -318,7 +318,7 @@ def main():
         else:
             mse = mean_squared_error(y_test, y_pred)
             r2  = r2_score(y_test, y_pred)
-            print(f'MSE: {mse:.4f}, R²: {r2:.4f}')
+            print(f'MSE: {mse:.4f}, R^2: {r2:.4f}')
 
         # Plot tree
         fig, ax     = plt.subplots(figsize=(12, 6))

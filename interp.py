@@ -27,8 +27,8 @@ debug = False
 
 # Interpolation settings
 epsilons   = np.linspace(0.5, 5.0, 10) # 10
-smoothings = np.logspace(-1, 0, 10)
-kernels    = ['gaussian', 'multiquadric']
+smoothings = np.logspace(-1, 0, 10) # 10
+kernels    = ['gaussian', 'multiquadratic']
 min_neigh  = 4
 max_neigh  = 6
 
@@ -193,7 +193,7 @@ def interpolate_one_star(i, param, ID, true_spectra, indices_list, distances_lis
         return None
 
 
-def interpall(max_passes=100, generated_stars=False, n_ms=None, n_rg=None, feh=None, afe=None, age=None, Z=None, use_model=False):
+def interpall(max_passes=100, generated_stars=False, n_ms=None, n_rg=None, feh=None, afe=None, age=None, Z=None, use_model=False, best_model=None):
 
     IDs, Teffs, loggs, Zs = param_retrieve()
     param_vectors = np.vstack((Teffs, loggs, Zs)).T
