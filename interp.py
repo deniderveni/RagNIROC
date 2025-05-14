@@ -26,9 +26,9 @@ import pandas as pd
 debug = False
 
 # Interpolation settings
-epsilons   = np.linspace(0.5, 5.0, 10) # 10
-smoothings = np.logspace(-1, 0, 10) # 10
-kernels    = ['gaussian', 'multiquadratic']
+epsilons   = np.linspace(0.5, 5.0, 10)
+smoothings = np.logspace(-1, 0, 10)
+kernels    = ['gaussian'] #, 'multiquadratic']
 min_neigh  = 4
 max_neigh  = 6
 

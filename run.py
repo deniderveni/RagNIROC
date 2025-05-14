@@ -80,4 +80,4 @@ interp.interpall(generated_stars=True, use_model=True, n_ms=n_ms, n_rg=n_rg, feh
 SSP_model.ssp_model(Z, fwhm = 2.5, feh = feh, afe = afe, age = age, imf = imf, n_ms = n_ms, n_rg = n_rg, dl = dl, iso = iso)
 
 ## Generate comparative plots
-# SSP_comparison.RunAll() # Only works for this example TODO: Fix naming for all combinations (if valid)
+SSP_comparison.RunAll() # Only works for this example TODO: Fix naming for all combinations (if valid)
